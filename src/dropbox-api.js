@@ -166,21 +166,23 @@ module.exports = {
 		};
 		Object.assign(clientSession, {
 				generateAuthUrl: (input) => {
-					return `${OAUTH2_AUTHORIZE}?client_id=${config.client_id}&response_type=code&redirect_uri=${config.redirect_uri}`;
+					return `${OAUTH2_AUTHORIZE}?client_id=${config.client_id}&response_type=code` +
+						(config.redirect_uri ? `&redirect_uri=${config.redirect_uri}` : '');
 				},
 				getToken: (code, userCb) => {
+					const form = {
+						code: code,
+						client_id: config.client_id,
+						client_secret: config.client_secret,
+						grant_type: 'authorization_code'
+					}
+					if (config.redirect_uri) form.redirect_uri = config.redirect_uri
 					request({
 						method: 'POST',
 						uri: OAUTH2_TOKEN,
 						followRedirect: true,
 						json: true,
-						form: {
-							code: code,
-							client_id: config.client_id,
-							client_secret: config.client_secret,
-							grant_type: 'authorization_code',
-							redirect_uri: config.redirect_uri
-						}
+						form
 					}, (err, resp, body) => {
 						if(err || body.error) {
 							userCb(body.error || {});
